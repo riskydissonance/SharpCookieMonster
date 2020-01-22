@@ -51,11 +51,11 @@
  SharpCookieMonster.exe https://sitename.com [chrome-debugging-port]
  ```
 
- An optional second argument specifies the port to launch the chrome debugger on (by default 9142).
+An optional second argument specifies the port to launch the chrome debugger on (by default 9142).
 
  ## Building
 
-The binary has been built to be compatible with .NET 3.5, however in order to use WebSockets to communicate with Chrome the WebSocket4Net packages was added.
+The binary has been built to be compatible with .NET 3.5 in order to be compatible with victims with older versions of .NET installed. However in order to use WebSockets to communicate with Chrome the WebSocket4Net package was added.
 
 If you want to run this down C2 such as using [PoshC2](https://github.com/nettitude/PoshC2)'s `sharpcookiemonster` command or via CobaltStrike's `execute-assembly` then use ILMerge to merge the built executable with the WebSocket4Net.dll library.
 

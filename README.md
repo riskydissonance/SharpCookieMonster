@@ -59,6 +59,8 @@ The binary has been built to be compatible with .NET 3.5, however in order to us
 
 If you want to run this down C2 such as using [PoshC2](https://github.com/nettitude/PoshC2)'s `sharpcookiemonster` command or via CobaltStrike's `execute-assembly` then use ILMerge to merge the built executable with the WebSocket4Net.dll library.
 
+First rename the original binary then run:
+
 ```
- ILMerge.exe /targetplatform:"v2,C:\Windows\Microsoft.NET\Framework\v2.0.50727" /out:SharpCookieMonsterMerged.exe SharpCookieMonster.exe WebSocket4Net.dll
+ ILMerge.exe /targetplatform:"v2,C:\Windows\Microsoft.NET\Framework\v2.0.50727" /out:SharpCookieMonster.exe SharpCookieMonsterOriginal.exe WebSocket4Net.dll SuperSocket.ClientEngine.dll
  ```

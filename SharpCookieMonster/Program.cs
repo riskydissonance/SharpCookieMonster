@@ -70,10 +70,11 @@ namespace SharpCookieMonster
             var cookies = "";
             try
             {
-                
+
                 cookies = GrabCookies(port);
-               
-            } finally 
+
+            }
+            finally
             {
                 Cleanup(pid);
             }
@@ -139,7 +140,7 @@ namespace SharpCookieMonster
                 {
                     Process.GetProcessById(pid);
                 }
-                catch(ArgumentException)
+                catch (ArgumentException)
                 {
                     Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
                     pid = 0;
@@ -180,7 +181,7 @@ namespace SharpCookieMonster
         {
             try
             {
-                if(pid != 0)
+                if (pid != 0)
                 {
                     Console.WriteLine("[*] Killing process " + pid);
                     Process.GetProcessById(pid).Kill();
@@ -226,7 +227,7 @@ namespace SharpCookieMonster
             Console.WriteLine(String.Format("[*] Waiting for debugger port {0} to open...", port));
             var start = DateTime.Now;
             var now = DateTime.Now;
-            while(now.Subtract(start).TotalMilliseconds < 30000) // 30s timeout
+            while (now.Subtract(start).TotalMilliseconds < 30000) // 30s timeout
             {
                 using (TcpClient tcpClient = new TcpClient())
                 {
@@ -246,5 +247,5 @@ namespace SharpCookieMonster
             return false;
         }
     }
-   
+
 }

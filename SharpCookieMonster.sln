@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpCookieMonster", "SharpCookieMonster\SharpCookieMonster.csproj", "{C94C4B67-EF4E-461D-8770-B0B3578104F0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpCookieMonster", "SharpCookieMonster\SharpCookieMonster.csproj", "{566C5556-1204-4DB9-9DC8-A24091BAAA8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C94C4B67-EF4E-461D-8770-B0B3578104F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C94C4B67-EF4E-461D-8770-B0B3578104F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C94C4B67-EF4E-461D-8770-B0B3578104F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C94C4B67-EF4E-461D-8770-B0B3578104F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{566C5556-1204-4DB9-9DC8-A24091BAAA8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{566C5556-1204-4DB9-9DC8-A24091BAAA8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{566C5556-1204-4DB9-9DC8-A24091BAAA8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{566C5556-1204-4DB9-9DC8-A24091BAAA8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {5DBB75FB-7E4E-4A17-9264-5685A894DC4E}
+		SolutionGuid = {8CC5761D-3509-4494-B639-DEB8300E5888}
 	EndGlobalSection
 EndGlobal

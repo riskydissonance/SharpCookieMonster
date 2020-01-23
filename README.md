@@ -37,7 +37,7 @@
  
  This is a Sharp port of @defaultnamehere's [cookie-crimes](https://github.com/defaultnamehere/cookie_crimes) module - full credit for their awesome work!
 
- This C# project will dump cookies for a specified site if chrome has any cached for that site, even those with httpOnly/secure/session flags.
+ This C# project will dump cookies for all sites, even those with httpOnly/secure/session flags.
 
  ![Running](https://raw.githubusercontent.com/m0rv4i/SharpCookieMonster/master/images/running.png)
 
@@ -45,12 +45,13 @@
 
  ## Usage
  
- Simply pass the site name to the binary.
+ Simply run the binary.
 
  ```
- SharpCookieMonster.exe https://sitename.com [chrome-debugging-port]
+ SharpCookieMonster.exe [https://sitename.com] [chrome-debugging-port]
  ```
 
+An optional first argument sepcifies the site that chrome will initially connect to when launched (default https://www.google.com).
 An optional second argument specifies the port to launch the chrome debugger on (by default 9142).
 
  ## Building

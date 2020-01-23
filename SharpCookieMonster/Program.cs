@@ -49,12 +49,17 @@ namespace SharpCookieMonster
         {
             Console.WriteLine(banner);
             Console.WriteLine("                     SharpCookieMonster v1.0 by @m0rv4i\n");
-            if (args.Length != 1 && args.Length != 2)
+            if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
-                Console.WriteLine("[*] SharpCookieMonster.exe https://sitename.com [chrome-debugging-port]");
+                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port]");
                 return;
             }
-            var url = args[0];
+            var url = "https://www.google.com";
+            if (args.Length >= 1)
+            {
+                url = args[0];
+                Console.WriteLine("[*] Accessing site: " + url);
+            }
             var port = 9142;
             if (args.Length == 2)
             {
@@ -90,13 +95,14 @@ namespace SharpCookieMonster
             {
                 Console.WriteLine("[+] Cookies! OM NOM NOM\n\n");
                 string pretty = cookies.Trim();
-                pretty = pretty.Replace("{\"id\":1,\"result\":", "");
-                pretty = pretty.Replace(",", ", \n");
-                pretty = pretty.Replace("},", "\n}, \n");
-                pretty = pretty.Replace("}]}", "\n}\n]}\n");
+                pretty = pretty.Replace("{\"id\":1,\"result\":{\"cookies\":", "");
+                pretty = pretty.Replace("}]}}", "}]");
+                pretty = pretty.Replace(",", ",\n");
+                pretty = pretty.Replace("},", "\n},");
+                pretty = pretty.Replace("}]", "\n}\n]\n");
                 pretty = pretty.Replace("{", " \n{\n");
                 pretty = pretty.Replace("\n\"", "\n\t\"");
-                pretty = pretty.Substring(0, pretty.LastIndexOf("}"));
+                pretty = pretty.Substring(0, pretty.LastIndexOf("]") + 1);
                 Console.WriteLine(pretty);
             }
         }

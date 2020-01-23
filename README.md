@@ -62,5 +62,5 @@ If you want to run this down C2 such as using [PoshC2](https://github.com/nettit
 First rename the original binary then run:
 
 ```
- ILMerge.exe /targetplatform:"v2,C:\Windows\Microsoft.NET\Framework\v2.0.50727" /out:SharpCookieMonster.exe SharpCookieMonsterOriginal.exe WebSocket4Net.dll SuperSocket.ClientEngine.dll
+ ILMerge.exe /targetplatform:"v2,C:\Windows\Microsoft.NET\Framework\v2.0.50727" /out:SharpCookieMonster.exe SharpCookieMonsterOriginal.exe WebSocket4Net.dll 
  ```

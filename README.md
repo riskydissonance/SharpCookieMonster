@@ -48,11 +48,12 @@
  Simply run the binary.
 
  ```
- SharpCookieMonster.exe [https://sitename.com] [chrome-debugging-port]
+ SharpCookieMonster.exe [https://sitename.com] [chrome-debugging-port] [user data dir]
  ```
 
 An optional first argument sepcifies the site that chrome will initially connect to when launched (default https://www.google.com).
 An optional second argument specifies the port to launch the chrome debugger on (by default 9142).
+An optional third argument specifies the path to the user data directory, which can be overridden in order to access different profiles etc (default %APPDATALOCAL%\Google\Chrome\User Data).
 
  ## Building
 

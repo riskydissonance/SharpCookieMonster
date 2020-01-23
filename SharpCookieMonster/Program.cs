@@ -51,7 +51,7 @@ namespace SharpCookieMonster
             Console.WriteLine("                     SharpCookieMonster v1.0 by @m0rv4i\n");
             if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
-                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port]");
+                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port] [userdatadir]");
                 return;
             }
             var url = "https://www.google.com";
@@ -61,12 +61,18 @@ namespace SharpCookieMonster
                 Console.WriteLine("[*] Accessing site: " + url);
             }
             var port = 9142;
-            if (args.Length == 2)
+            if (args.Length >= 2)
             {
                 port = int.Parse(args[1]);
                 Console.WriteLine("[*] Using chrome debugging port: " + port);
             }
-            var pid = LaunchChromeHeadless(url, port);
+            var userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Google\Chrome\User Data";
+            if(args.Length == 3)
+            {
+                userdata = args[2];
+            }
+            Console.WriteLine("[*] Using data path: " + userdata);
+            var pid = LaunchChromeHeadless(url, userdata, port);
             if (pid < 0)
             {
                 // Ain't running - no point in continuing
@@ -107,7 +113,7 @@ namespace SharpCookieMonster
             }
         }
 
-        private static int LaunchChromeHeadless(string url, int port)
+        private static int LaunchChromeHeadless(string url, string userdata, int port)
         {
             using (Process chrome = new Process())
             {
@@ -124,8 +130,6 @@ namespace SharpCookieMonster
                 }
                 chrome.StartInfo.UseShellExecute = false;
                 chrome.StartInfo.FileName = path;
-                var userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Google\Chrome\User Data";
-                Console.WriteLine("[*] Using data path: " + userdata);
                 chrome.StartInfo.Arguments = String.Format("\"{0}\" --headless --user-data-dir=\"{1}\" --remote-debugging-port={2}", url, userdata, port);
                 chrome.StartInfo.CreateNoWindow = true;
                 chrome.OutputDataReceived += (sender, args) => Console.WriteLine("[*][Chrome] {0}", args.Data);

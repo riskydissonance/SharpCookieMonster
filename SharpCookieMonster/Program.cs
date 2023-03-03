@@ -144,17 +144,16 @@ namespace SharpCookieMonster
                 chrome.BeginErrorReadLine();
                 var pid = chrome.Id;
                 Thread.Sleep(1000);
-                Process createdProcess = null;
                 try
                 {
-                    createdProcess = Process.GetProcessById(pid);
+                    Process.GetProcessById(pid);
                 }
                 catch (ArgumentException)
                 {
                     Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
                 }
                 Console.WriteLine("[*] Started chrome headless process: " + pid);
-                if (WaitForPort(port)) return createdProcess;
+                if (WaitForPort(port)) return chrome;
                 Console.WriteLine("[-] Timed out waiting for debug port to open...");
                 return null;
             }

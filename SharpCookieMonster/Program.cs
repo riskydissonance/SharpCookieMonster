@@ -139,7 +139,7 @@ namespace SharpCookieMonster
 
             chrome.StartInfo.UseShellExecute = false;
             chrome.StartInfo.FileName = path;
-            chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port} --remote-allow-origins=ws://localhost:9142";
+            chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port} --remote-allow-origins=ws://localhost:{port}";
             chrome.StartInfo.CreateNoWindow = true;
             chrome.OutputDataReceived += LogData;
             chrome.ErrorDataReceived += LogData;

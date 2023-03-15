@@ -48,12 +48,14 @@ This C# project will dump cookies for all sites, even those with httpOnly/secure
 Simply run the binary.
 
  ```
-SharpCookieMonster.exe [https://sitename.com] [chrome-debugging-port] [user data dir]
+SharpCookieMonster.exe [url] [edge|chrome] [debugging-port] [user-data-dir]
  ```
 
-An optional first argument sepcifies the site that chrome will initially connect to when launched (default https://www.google.com).
+An optional first argument specifies the site that chrome will initially connect to when launched (default https://www.google.com).
 
-An optional second argument specifies the port to launch the chrome debugger on (by default 9142).
+An optional second argument sets whether chrome or msedge will be checked (default to chrome).
+
+An optional third argument specifies the port to launch the chrome debugger on (by default 9142).
 
 Finally, an optional third argument specifies the path to the user data directory, which can be overridden in order to access different profiles etc (default %APPDATALOCAL%\Google\Chrome\User Data).
 

